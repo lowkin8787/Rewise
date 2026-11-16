@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1018">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Revision Curve</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef2f5;--card:#fff;--line:#dde4ea;--text:#0d1620;--sub:#5d6b7a;--ok:#0f9d76;--okbg:#dff5ec;--due:#c77a00;--duebg:#fff0d4;--bad:#d6334a;--badbg:#fde4e8;--pri:#2457d6;--soft:#e4ebf7;--on:#fff}
+:root[data-theme="dark"]{--bg:#0a1018;--card:#121b27;--line:#1f2d3f;--text:#eaf1f7;--sub:#8b9bb0;--ok:#35d6a4;--okbg:#10352c;--due:#ffb547;--duebg:#3a2c0e;--bad:#ff6b7f;--badbg:#3b1822;--pri:#7aa2ff;--soft:#17243a;--on:#0a1018}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){--bg:#0a1018;--card:#121b27;--line:#1f2d3f;--text:#eaf1f7;--sub:#8b9bb0;--ok:#35d6a4;--okbg:#10352c;--due:#ffb547;--duebg:#3a2c0e;--bad:#ff6b7f;--badbg:#3b1822;--pri:#7aa2ff;--soft:#17243a;--on:#0a1018}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 "DM Sans",system-ui,sans-serif;padding:18px 16px 96px;transition:background .2s}
+#app{max-width:560px;margin:0 auto}
+h1,.big,.disp{font-family:"Bricolage Grotesque","DM Sans",system-ui,sans-serif}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.top p{margin:0;color:var(--sub);font-size:13px}
+h1{margin:2px 0 0;font-size:30px;letter-spacing:-.02em;font-weight:800}
+.streak{background:var(--duebg);color:var(--due);border-radius:999px;padding:7px 13px;font-weight:600;font-size:13px}
+.hero{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.big{font-size:68px;font-weight:800;line-height:.95;letter-spacing:-.04em}
+.lbl{color:var(--sub);margin:6px 0 14px;max-width:190px}
+.go{background:var(--pri);color:var(--on);font-weight:600;padding:12px 20px;border-radius:16px}
+.go:disabled{opacity:.35}
+.ring{position:relative;width:104px;height:104px;flex:none}
+.ring svg{width:100%;height:100%}
+.ring circle{fill:none;stroke-width:9;stroke-linecap:round}
+.rt{stroke:var(--line)}.rf{stroke:var(--ok);transition:stroke-dasharray .5s}
+.ring span{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:17px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:11px 8px;text-align:center}
+.stat b{display:block;font:700 22px "Bricolage Grotesque",sans-serif}
+.stat small{color:var(--sub);font-size:11.5px}
+.stat.bad b{color:var(--bad)}.stat.ok b{color:var(--ok)}
+.week{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px 14px 10px;margin-bottom:16px}
+.week h2,.sec{font-size:14px;font-weight:600;margin:0 0 10px;color:var(--sub)}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:84px}
+.bc{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;font-size:11px;color:var(--sub)}
+.bc i{display:block;width:100%;max-width:26px;border-radius:8px 8px 4px 4px;background:var(--soft);min-height:4px}
+.bc.t i{background:var(--pri)}.bc b{color:var(--text);font-size:12px}
+.tabs{display:flex;background:var(--soft);border-radius:16px;padding:4px;margin-bottom:10px}
+.tabs button{flex:1;padding:8px 2px;border-radius:12px;font-size:13px;font-weight:600;color:var(--sub)}
+.tabs button.on{background:var(--card);color:var(--text)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;scrollbar-width:none}
+.chips button,.chips label{flex:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--sub);background:var(--card)}
+.chips label{padding:0;overflow:hidden}.chips label span{padding:6px 12px}
+.chips button.on{background:var(--pri);color:var(--on);border-color:var(--pri)}.chips input:checked+span{background:var(--pri);color:var(--on)}
+.t{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:16px;margin-bottom:10px}
+.th{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.th h3{margin:0;font:700 17px/1.25 "Bricolage Grotesque",sans-serif}
+.sb{display:inline-block;font-size:12px;color:var(--sub);margin-bottom:3px}
+.x{color:var(--sub);font-size:12px;padding:4px 8px;border-radius:10px;flex:none}
+.x.arm{background:var(--badbg);color:var(--bad)}
+.steps{display:flex;margin:14px 0 10px}
+.st{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;font-size:11.5px;color:var(--sub);gap:4px}
+.st i{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-style:normal;font-size:12px;background:var(--card);position:relative;z-index:1}
+.st:not(:first-child)::before{content:"";position:absolute;top:11px;right:50%;width:100%;height:2px;background:var(--line)}
+.st.done::before,.st.due::before,.st.next::before{background:var(--ok)}
+.st.done i{background:var(--ok);border-color:var(--ok);color:var(--on)}
+.st.due i{border-color:var(--due);background:var(--duebg)}.st.due b{color:var(--due)}
+.st.next i{border-color:var(--pri)}
+.st b{font-weight:600}
+.msg{font-size:13.5px;color:var(--sub);margin:0 0 4px}
+.msg em{font-style:normal;font-weight:600}.msg .o{color:var(--bad)}.msg .d{color:var(--due)}.msg .k{color:var(--ok)}
+.lap{display:inline-block;margin-left:6px;font-size:12px;background:var(--badbg);color:var(--bad);border-radius:999px;padding:1px 8px}
+details{font-size:13.5px;margin-top:6px}summary{color:var(--pri);cursor:pointer}details p{margin:6px 0 0;color:var(--sub)}
+.acts{display:flex;gap:8px;margin-top:12px}
+.acts button{flex:1;padding:12px 2px;border-radius:14px;font-weight:600;font-size:13.5px}
+.pass{background:var(--ok);color:var(--on)}.fg{background:var(--badbg);color:var(--bad)}.ez{background:var(--okbg);color:var(--ok)}.ok2{background:var(--soft);color:var(--pri)}.hd{background:var(--duebg);color:var(--due)}
+.lim{display:flex;align-items:center;gap:6px;margin:0 0 12px;font-size:13px;color:var(--sub);overflow-x:auto;scrollbar-width:none}.lim span{flex:none;margin-right:2px}.lim button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px;color:var(--sub)}.lim button.on{background:var(--pri);color:var(--on);border-color:var(--pri)}
+.empty{text-align:center;color:var(--sub);padding:28px 10px}
+.empty button{color:var(--pri);font-weight:600;margin-top:8px}
+.sh{font:700 18px "Bricolage Grotesque",sans-serif;margin:16px 0 8px}.grp{margin:0 0 10px;font-size:15px}.grp>summary{display:flex;justify-content:space-between;align-items:center;gap:8px;list-style:none;color:var(--text);background:var(--soft);border-radius:16px;padding:12px 14px;margin-bottom:8px;cursor:pointer}.grp>summary::-webkit-details-marker{display:none}.grp>summary span{color:var(--sub);font-size:12.5px;text-align:right}.grp>summary b{font-size:15px}.addc{width:100%;padding:12px;border-radius:16px;border:1.5px dashed var(--line);color:var(--pri);font-weight:600;margin-bottom:6px}.row .addc{background:none;padding:12px;font-size:14px}
+#f-par{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:6px}
+.tw{overflow-x:auto;padding-bottom:4px}.tree,.tree ul{list-style:none;margin:0;padding:0}.tree ul{margin-left:12px;padding-left:14px;border-left:2px solid var(--line)}.tree li{position:relative;margin-top:8px}.tree ul>li::before{content:"";position:absolute;left:-14px;top:24px;width:14px;border-top:2px solid var(--line)}
+.fn{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--sub);border-radius:14px;padding:10px 12px;min-width:180px}.fn.m{border-left-color:var(--ok)}.fn.d{border-left-color:var(--due)}.fn.o{border-left-color:var(--bad)}.fn.n{border-left-color:var(--pri)}.fn.root{border-left-color:var(--text);background:var(--soft)}
+.fn b{display:block;font:700 15px/1.25 "Bricolage Grotesque",sans-serif}.fn .pr{display:block;font-size:12.5px;color:var(--sub)}.fn .fs{display:inline-block;font-size:12px;margin-top:4px;padding:2px 9px;border-radius:999px;background:var(--soft)}.fn.m .fs{background:var(--okbg);color:var(--ok)}.fn.d .fs{background:var(--duebg);color:var(--due)}.fn.o .fs{background:var(--badbg);color:var(--bad)}.fn p{margin:6px 0 0;font-size:13px;color:var(--sub)}.fa{display:flex;gap:14px;margin-top:6px}.fa button{font-size:12.5px;color:var(--pri);font-weight:600}
+.srch{position:relative;margin:0 0 12px}.srch::before{content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}.srch input{width:100%;font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 40px;-webkit-appearance:none;appearance:none}.srch input::-webkit-search-cancel-button{display:none}.srch button{position:absolute;right:6px;top:50%;transform:translateY(-50%);padding:6px 10px;color:var(--sub)}
+.hlp{width:34px;height:34px;border-radius:50%;background:var(--soft);color:var(--pri);font-weight:700}.tl{margin:6px 0 0;padding-left:20px;font-size:15px;line-height:1.5}.tl li{margin-bottom:8px}
+.sug{width:100%;margin-top:8px;padding:12px;border-radius:14px;background:var(--soft);color:var(--pri);font-weight:600}.sug:disabled{opacity:.6}
+.bk{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px}
+textarea,input[type=text],input[type=date]{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:8px}
+textarea{min-height:70px;resize:vertical}
+.row{display:flex;gap:8px;margin-top:8px}.row button{flex:1;padding:10px;border-radius:12px;background:var(--soft);font-weight:600;font-size:13px}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--line);display:flex;gap:8px}
+.bar button{flex:1;padding:13px;border-radius:16px;font-weight:600;background:var(--soft)}
+.bar .m{background:var(--pri);color:var(--on);flex:1.6}.bar .th2{flex:none;width:52px}
+.ov{position:fixed;inset:0;z-index:40;background:rgba(5,9,14,.6);display:none;align-items:flex-end}
+.ov.on{display:flex}
+.pane{background:var(--bg);width:100%;max-width:560px;margin:0 auto;border-radius:28px 28px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:92%;overflow:auto}
+.pane h2{margin:0 0 4px;font:700 22px "Bricolage Grotesque",sans-serif}
+.pane .pass,.pane .go{width:100%;margin-top:12px;padding:14px;border-radius:16px;font-weight:600}
+.q{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));flex-direction:column}
+.q.on{display:flex}
+.qp{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin:12px 0 22px}.qp i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.qh{display:flex;justify-content:space-between;color:var(--sub);font-size:13px;align-items:center}
+.qc{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:10px}
+.qc h2{font:800 30px/1.15 "Bricolage Grotesque",sans-serif;margin:0;letter-spacing:-.02em}
+.qn{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;text-align:left;color:var(--text)}
+.qb{display:flex;gap:8px;flex-direction:column}
+.qb small{display:block;font-weight:400;opacity:.8;font-size:12px}
+.qb button{padding:14px;border-radius:18px;font-weight:600}
+.qg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.qg button{padding:14px 6px;border-radius:18px;font-weight:600}.qg small{display:block;font-weight:400;opacity:.8;font-size:12px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:60;max-width:528px;margin:0 auto;background:var(--text);color:var(--bg);padding:12px 16px;border-radius:16px;font-size:14px;opacity:0;transform:translateY(8px);pointer-events:none;transition:.25s}
+.toast.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div><p id="date"></p><h1>Revision curve</h1></div>
+    <div style="display:flex;gap:8px;align-items:center"><button class="hlp" data-act="tour" aria-label="How this app works">?</button><div class="streak" id="streak"></div></div>
+  </div>
+  <section class="hero" id="hero"></section>
+  <section class="stats" id="stats"></section>
+  <section class="week"><h2>Revisions in the next 7 days</h2><div class="bars" id="week"></div></section>
+  <div class="srch"><input type="search" id="sq" placeholder="Search topics or chapters" autocomplete="off" aria-label="Search topics or chapters"><button id="sqx" data-act="sqclear" style="display:none" aria-label="Clear search">✕</button></div>
+  <div class="lim" id="lim"></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="chips" id="subjs"></div>
+  <div class="chips" id="chaps"></div>
+  <div id="list"></div>
+  <details class="bk"><summary>Backup and restore</summary>
+    <p class="msg">Your topics live in this browser only. Copy the backup text and keep it somewhere safe.</p>
+    <textarea id="bk" placeholder="Backup text appears here. Paste a saved backup here to restore."></textarea>
+    <div class="row"><button data-act="copy">Copy backup</button><button data-act="restore">Restore from text</button></div>
+    <div class="row"><button data-act="reset" id="rst" style="color:var(--bad)">Reset app to default</button></div>
+  </details>
+</div>
+
+<nav class="bar">
+  <button class="m" data-act="quiz" id="qbtn">Revise</button>
+  <button data-act="add">+ Add topic</button>
+  <button class="th2" data-act="theme" aria-label="Switch light or dark">◐</button>
+</nav>
+
+<div class="ov" id="sheet" data-act="closeSheet">
+  <div class="pane" id="pane">
+    <h2 id="f-h">What did you learn?</h2>
+    <div class="tabs" id="f-mode" style="margin:10px 0"></div>
+    <div class="chips" id="f-subj"></div>
+    <input type="text" id="f-chname" placeholder="Chapter, e.g. Cell injury (optional)" autocomplete="off">
+    <div class="chips" id="f-chs" style="margin-top:8px"></div>
+    <p class="msg" style="margin:10px 0 0">Under which topic? (optional)</p><select id="f-par"></select>
+    <div id="f-one"><input type="text" id="f-title" placeholder="Topic, e.g. Acute inflammation" autocomplete="off"><input type="text" id="f-note" placeholder="Key note to recall later (optional)" autocomplete="off"></div>
+    <div id="f-chap" style="display:none"><textarea id="f-lines" style="min-height:130px" placeholder="One small topic per line. Add a note after a | sign:
+Vascular events | vasodilation, then permeability
+Cellular events | margination, emigration"></textarea><p class="msg">Start a line with “- ” to put it under the line above, and “-- ” to go one level deeper.</p><div id="f-sugw" style="display:none"><button class="sug" id="f-sug" data-act="sugg">✨ Suggest branches with Claude</button><p class="msg" style="font-size:12.5px">Suggestions come from Claude’s own knowledge, not a live web search, and can contain mistakes. Check them against your textbook before relying on them.</p></div></div>
+    <div id="f-dt"><p class="msg" style="margin-top:12px">Date you learned it</p>
+    <input type="date" id="f-date" style="margin-top:0"></div>
+    <button class="go" id="f-save" data-act="save">Save topic</button>
+  </div>
+</div>
+
+<div class="q" id="quiz"></div>
+<div class="q" id="tour"></div>
+<div class="ov" id="subjd" data-act="closeSubj" style="z-index:48"><div class="pane">
+  <h2>New subject</h2>
+  <p class="msg">For example Physiology, Anatomy or Community Medicine.</p>
+  <input type="text" id="ns-name" maxlength="24" placeholder="Subject name" autocomplete="off">
+  <p class="msg" style="margin-top:12px">Pick an icon</p>
+  <div class="chips" id="ns-emo" style="flex-wrap:wrap;overflow:visible"></div>
+  <div id="ns-list"></div>
+  <button class="go" data-act="subjsave">Add subject</button>
+  <button class="go" data-act="closeSubjBtn" style="background:var(--soft);color:var(--text)">Cancel</button>
+</div></div>
+<div class="ov" id="gr" data-act="closeGr"><div class="pane" id="grp"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var K = "bhms_revision_curve_v1";
+var SCH = [1, 3, 5, 7, 14];
+var SUBJ = { Pathology: "🧫", FMT: "⚖️", HMM: "🌿", Organon: "📖" }, SUBJF = { Pathology: "Pathology", FMT: "Forensic Medicine and Toxicology", HMM: "Homeopathic Materia Medica", Organon: "Organon of Medicine" }, DEFSUBJ = ["Pathology", "FMT", "HMM", "Organon"], resetArm = false, tourI = -1, sq = "";
+var S = { topics: [], log: {}, theme: "dark", cap: 15, bonus: { day: -1, n: 0 }, tour: 0, custom: {} };
+var tab = "due", subj = "all", pick = "Pathology", armed = null, mode = "one", chap = "all", editId = null, openG = {}, ren = null, G = null, FB = null;
+var Q = { open: false, rev: false, total: 0 };
+
+function load() {
+  try { var r = localStorage.getItem(K); if (r) { var p = JSON.parse(r); if (p && Array.isArray(p.topics)) { S = { topics: p.topics, log: p.log || {}, theme: p.theme || "dark", cap: p.cap == null ? 15 : p.cap, bonus: p.bonus || { day: -1, n: 0 }, tour: p.tour || 0, custom: p.custom || {} }; } } } catch (e) {}
+}
+function save() { try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) {} }
+function today() { var d = new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); }
+function fmt(n) { return new Date(n * 864e5).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }); }
+function dow(n) { return new Date(n * 864e5).toLocaleDateString("en-IN", { weekday: "short", timeZone: "UTC" }); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function $(id) { return document.getElementById(id); }
+function toast(m) { var t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove("on"); }, 2800); }
+function buzz() { try { navigator.vibrate && navigator.vibrate(18); } catch (e) {} }
+
+function dueList() { var T = today(); return S.topics.filter(function (t) { return t.stage < 5 && t.due <= T; }).sort(function (a, b) { return a.due - b.due; }); }
+function allowed() { var T = today(), b = S.bonus && S.bonus.day === T ? S.bonus.n : 0; return S.cap ? Math.max(0, S.cap + b - (S.log[T] || 0)) : 1e9; }
+function queue() { return dueList().slice(0, allowed()); }
+function streak() { var T = today(), d = T, n = 0; if (!S.log[d]) d--; while (S.log[d] > 0) { n++; d--; } return n; }
+
+function addTopic(title, subject, note, learned, stage) {
+  stage = stage || 0;
+  S.topics.push({ id: Date.now() * 1000 + (addTopic.n = ((addTopic.n || 0) + 1) % 1000), title: title, subject: subject, note: note || "", learned: learned, stage: stage, due: learned + SCH[stage], lapses: 0 });
+}
+
+function pass(id) {
+  var t = S.topics.filter(function (x) { return x.id === id; })[0]; if (!t) return;
+  var T = today(); t.stage += 1; S.log[T] = (S.log[T] || 0) + 1;
+  if (t.stage < 5) { t.due = T + SCH[t.stage] - SCH[t.stage - 1]; toast("Day " + SCH[t.stage - 1] + " completed. Next is Day " + SCH[t.stage] + " on " + fmt(t.due) + "."); }
+  else { toast("Mastered: " + t.title + ". All 5 revisions completed."); }
+  buzz(); save(); render();
+}
+function forgot(id) {
+  var t = S.topics.filter(function (x) { return x.id === id; })[0]; if (!t) return;
+  var T = today(); t.stage = Math.max(0, t.stage - 1); t.due = T + 1; t.lapses = (t.lapses || 0) + 1; S.log[T] = (S.log[T] || 0) + 1;
+  toast("No problem. You will repeat Day " + SCH[t.stage] + " tomorrow."); buzz(); save(); render();
+}
+
+function grade(id, g) {
+  var t = S.topics.filter(function (x) { return x.id === id; })[0]; if (!t) return;
+  t.grades = (t.grades || []).concat(g).slice(-6);
+  if (g === "f") forgot(id);
+  else if (g === "h") { var T = today(); t.due = T + 2; S.log[T] = (S.log[T] || 0) + 1; toast("Hard is useful to know. Day " + SCH[t.stage] + " repeats on " + fmt(t.due) + "."); buzz(); save(); render(); }
+  else pass(id);
+}
+function gb(id, g, c, l, s, act) { return '<button class="' + c + '" data-act="' + act + '" data-id="' + id + '" data-v="' + g + '">' + l + (s ? '<small>' + s + '</small>' : "") + '</button>'; }
+function status(t) {
+  var T = today();
+  if (t.stage >= 5) return '<span class="k"><em>Mastered.</em></span> All 5 revisions completed.';
+  var done = t.stage > 0 ? "Day " + SCH[t.stage - 1] + " completed" : "Learned on " + fmt(t.learned);
+  var lab = "Day " + SCH[t.stage], d = t.due - T;
+  if (d < 0) return done + ". <em class='o'>" + lab + " overdue by " + (-d) + (d === -1 ? " day" : " days") + "</em>";
+  if (d === 0) return done + ". <em class='d'>" + lab + " is due today</em>";
+  return done + ". " + lab + " on <em>" + fmt(t.due) + "</em> (in " + d + (d === 1 ? " day)" : " days)");
+}
+
+function parentOpts(sel) {
+  var ch = $("f-chname").value.trim(), r = document.querySelector('input[name="sj"]:checked'), sj = r ? r.value : pick, bad = {}, grow = true, cur = sel !== undefined ? sel : $("f-par").value;
+  if (editId) { bad[editId] = 1; while (grow) { grow = false; S.topics.forEach(function (t) { if (t.parent && bad[t.parent] && !bad[t.id]) { bad[t.id] = 1; grow = true; } }); } }
+  $("f-par").innerHTML = '<option value="">No parent (top of chapter)</option>' + (ch ? S.topics.filter(function (t) { return t.subject === sj && (t.chapter || "") === ch && !bad[t.id]; }).map(function (t) { return '<option value="' + t.id + '">' + esc(t.title) + '</option>'; }).join("") : "");
+  $("f-par").value = cur ? String(cur) : ""; if ($("f-par").selectedIndex < 0) $("f-par").selectedIndex = 0;
+}
+var SM = null;
+try { if (window.claude && window.claude.use) window.claude.use("sample").then(function (x) { SM = x; if (x) $("f-sugw").style.display = ""; }, function () {}); } catch (e) {}
+function suggest() {
+  if (!SM) { toast("Claude suggestions are not available on this page."); return; }
+  var ch = $("f-chname").value.trim(); if (!ch) { toast("Type the chapter name first."); return; }
+  var r = document.querySelector('input[name="sj"]:checked'), sj = r ? r.value : pick, pv = $("f-par").value;
+  var pt = pv ? S.topics.filter(function (t) { return String(t.id) === pv; })[0] : null;
+  var have = S.topics.filter(function (t) { return t.subject === sj && (t.chapter || "") === ch; }).map(function (t) { return t.title; });
+  var q = "A BHMS (Bachelor of Homoeopathic Medicine and Surgery, India) student is building a revision outline. Subject: " + (SUBJF[sj] || sj) + ". Chapter: " + ch + "." +
+    (pt ? " Suggest sub-topics that belong under the topic \"" + pt.title + "\"." : " Suggest the main topics of this chapter.") +
+    (have.length ? " Topics already added, do not repeat them: " + have.join("; ") + "." : "") +
+    " Follow the structure of the standard textbooks for that subject (for pathology, Robbins or Harsh Mohan; for the homeopathic subjects, the standard BHMS texts). Write 4 to 8 topics. Output rules: one topic per line, no numbering, no headings, no extra text. A topic that has sub-topics is followed by its sub-topics on the next lines, each starting with \"- \". Sub-sub-topics start with \"-- \". After every topic write \" | \" and a plain-language summary of at most 110 characters. This example only shows the format, the content must be about the chapter above:\nFirst topic | one-line summary\n- Sub-topic | one-line summary\nSecond topic | one-line summary";
+  var btn = $("f-sug"); btn.disabled = true; btn.textContent = "Claude is writing...";
+  SM(q, { modelTier: "default", cache: false }).then(function (res) {
+    var txt = String((res && res.text) || "").replace(/```[a-z]*/g, "").split("\n").map(function (l) { return l.replace(/\s+$/, ""); }).filter(function (l) { return l.trim(); }).join("\n");
+    var ta = $("f-lines"); ta.value = (ta.value.trim() ? ta.value.replace(/\s+$/, "") + "\n" : "") + txt;
+    toast("Review the list, fix anything wrong, then save.");
+  }, function (e) { toast(e && e.code === "not_granted" ? "Permission was not given." : e && e.code === "rate_limited" ? "Too many requests. Wait a minute." : "Could not get suggestions. Try again."); })
+  .then(function () { btn.disabled = false; btn.textContent = "✨ Suggest branches with Claude"; });
+}
+function backFlow() { if (FB) { G = { kind: "c", s: FB.s, ch: FB.ch }; FB = null; renderFlow(); } }
+function renderFlow() {
+  var el = $("grp"), ov = $("gr");
+  if (!G) { ov.classList.remove("on"); return; }
+  var T = today(), ts = S.topics.filter(function (x) { return x.subject === G.s && (x.chapter || "") === G.ch; });
+  if (!ts.length) { G = null; ov.classList.remove("on"); return; }
+  var ids = {}, kids = {}, roots = [], got = 0, mas = 0;
+  ts.forEach(function (x) { ids[x.id] = 1; got += x.stage; if (x.stage >= 5) mas++; });
+  ts.forEach(function (x) { if (x.parent && ids[x.parent]) (kids[x.parent] = kids[x.parent] || []).push(x); else roots.push(x); });
+  function sub(x) { var r = { g: x.stage, t: 5 }; (kids[x.id] || []).forEach(function (k) { var q = sub(k); r.g += q.g; r.t += q.t; }); return r; }
+  function node(x) {
+    var s = sub(x), d = x.due - T, st, cl, k = kids[x.id] || [];
+    if (x.stage >= 5) { st = "Mastered"; cl = "m"; } else if (d < 0) { st = "Day " + SCH[x.stage] + " overdue"; cl = "o"; } else if (d === 0) { st = "Day " + SCH[x.stage] + " due today"; cl = "d"; } else { st = "Day " + SCH[x.stage] + " on " + fmt(x.due); cl = "n"; }
+    return '<li><div class="fn ' + cl + '"><b>' + esc(x.title) + '</b><span class="pr">(' + x.stage + '/5 done' + (k.length ? ", whole branch " + Math.round(s.g / s.t * 100) + "%" : "") + ')</span><span class="fs">' + st + '</span>' + (x.note ? '<p>' + esc(x.note) + '</p>' : "") + '<span class="fa"><button data-act="addsub" data-id="' + x.id + '">+ Sub-topic</button><button data-act="flowedit" data-id="' + x.id + '">Edit</button></span></div>' + (k.length ? '<ul>' + k.map(function (c) { return node(c); }).join("") + '</ul>' : "") + '</li>';
+  }
+  el.innerHTML = '<h2>Flowchart</h2><p class="msg">' + esc(G.s) + '. Brackets show revisions done out of 5.</p><div class="tw"><ul class="tree"><li><div class="fn root"><b>' + esc(G.ch) + '</b><span class="pr">(' + Math.round(got / (ts.length * 5) * 100) + '% done, ' + mas + ' of ' + ts.length + ' topics mastered)</span></div><ul>' + roots.map(function (x) { return node(x); }).join("") + '</ul></li></ul></div><button class="go" data-act="addtop">+ Add topic to ' + esc(G.ch) + '</button>' + (SM ? '<button class="go" data-act="flowsug" style="background:var(--soft);color:var(--pri)">✨ Suggest branches with Claude</button>' : "") + '<button class="go" data-act="grclose" style="background:var(--soft);color:var(--text)">Close</button>';
+  el.scrollTop = 0; ov.classList.add("on");
+}
+function grouped(list) {
+  var T = today(), by = {}, order = [];
+  list.forEach(function (t) { var ch = t.chapter || "", k = t.subject + " / " + ch; if (!by[k]) { by[k] = { s: t.subject, ch: ch, ts: [] }; order.push(k); } by[k].ts.push(t); });
+  return Object.keys(SUBJ).map(function (s) {
+    var ks = order.filter(function (k) { return by[k].s === s; }); if (!ks.length) return "";
+    return '<h2 class="sh">' + SUBJ[s] + " " + s + '</h2>' + ks.map(function (k) {
+      var g = by[k], ts = g.ts.slice().sort(function (a, b) { return a.learned - b.learned || a.id - b.id; });
+      var dn = ts.filter(function (t) { return t.stage < 5 && t.due <= T; }).length, ms = ts.filter(function (t) { return t.stage >= 5; }).length;
+      var op = openG[k] !== undefined ? openG[k] : dn > 0;
+      return '<details class="grp" data-g="' + esc(k) + '"' + (op ? " open" : "") + '><summary><b>' + esc(g.ch || "No chapter") + '</b><span>' + ts.length + (ts.length === 1 ? " topic, " : " topics, ") + ms + " mastered" + (dn ? ", " + dn + " due" : "") + '</span></summary>' + ts.map(card).join("") + (g.ch ? (ren && ren.s === g.s && ren.ch === g.ch ? '<div class="rn"><input type="text" id="ren-in" value="' + esc(g.ch) + '" autocomplete="off"><div class="row"><button data-act="rensave">Save name</button><button data-act="rencancel">Cancel</button></div></div>' : '<div class="row"><button class="addc" data-act="addin" data-v="' + esc(g.ch) + '">+ Add topic</button><button class="addc" data-act="gch" data-v="' + esc(g.ch) + '" data-s="' + esc(g.s) + '">🌳 Flowchart</button></div>') : "") + '</details>';
+    }).join("");
+  }).join("");
+}
+function card(t) {
+  var T = today(), isDue = t.stage < 5 && t.due <= T, hc = (t.grades || []).filter(function (x) { return x === "h"; }).length;
+  var steps = SCH.map(function (d, i) {
+    var c = i < t.stage ? "done" : (i === t.stage ? (isDue ? "due" : "next") : "todo");
+    return '<div class="st ' + c + '"><i>' + (i < t.stage ? "✓" : "") + '</i><b>D' + d + '</b></div>';
+  }).join("");
+  return '<article class="t"><div class="th"><div><span class="sb">' + (SUBJ[t.subject] || "📚") + " " + esc(t.subject) + (t.chapter ? " / " + esc(t.chapter) : "") + '</span><h3>' + esc(t.title) + (t.lapses ? '<span class="lap">forgot ' + t.lapses + 'x</span>' : "") + (hc ? '<span class="lap" style="background:var(--duebg);color:var(--due)">hard ' + hc + 'x</span>' : "") + '</h3></div>' +
+    '<div style="display:flex;flex:none"><button class="x" data-act="edit" data-id="' + t.id + '">Edit</button><button class="x' + (armed === t.id ? " arm" : "") + '" data-act="del" data-id="' + t.id + '">' + (armed === t.id ? "Tap to delete" : "Delete") + '</button></div></div>' +
+    '<div class="steps">' + steps + '</div><p class="msg">' + status(t) + '</p>' +
+    (t.note ? '<details><summary>Show note</summary><p>' + esc(t.note) + '</p></details>' : "") +
+    (isDue ? '<div class="acts">' + gb(t.id, "e", "ez", "Easy", "", "grade") + gb(t.id, "o", "ok2", "Okay", "", "grade") + gb(t.id, "h", "hd", "Hard", "", "grade") + gb(t.id, "f", "fg", "Forgot", "", "grade") + '</div>' : "") + '</article>';
+}
+
+function hit(t) {
+  var h = (t.title + " " + (t.note || "") + " " + (t.chapter || "") + " " + t.subject + " " + (SUBJF[t.subject] || "")).toLowerCase();
+  return sq.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; });
+}
+function searchHtml(list) {
+  var seen = {}, chs = [], n = list.length;
+  S.topics.forEach(function (t) {
+    if (!t.chapter) return;
+    var k = t.subject + " / " + t.chapter; if (seen[k]) return;
+    var h = (t.chapter + " " + t.subject + " " + (SUBJF[t.subject] || "")).toLowerCase();
+    if (sq.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; })) { seen[k] = 1; chs.push(t); }
+  });
+  var out = '<p class="msg">' + n + (n === 1 ? " topic" : " topics") + ' found for “' + esc(sq) + '”, across all tabs.</p>';
+  if (chs.length) out += '<p class="sec" style="margin:0 0 6px">Chapters</p><div class="chips">' + chs.map(function (t) {
+    var c = S.topics.filter(function (x) { return x.subject === t.subject && x.chapter === t.chapter; }).length;
+    return '<button data-act="gch" data-s="' + esc(t.subject) + '" data-v="' + esc(t.chapter) + '">📑 ' + esc(t.chapter) + " (" + c + ")</button>";
+  }).join("") + "</div>";
+  return out + (n ? list.map(card).join("") : '<div class="empty">No topics match. Try fewer or different words.</div>');
+}
+function render() {
+  document.documentElement.setAttribute("data-theme", S.theme);
+  Object.keys(S.custom || {}).forEach(function (k) { SUBJ[k] = S.custom[k]; SUBJF[k] = k; });
+  S.topics.forEach(function (t) { if (!SUBJ[t.subject]) SUBJ[t.subject] = "📚"; });
+  var T = today(), all = dueList(), due = queue(), waiting = all.length - due.length, done = S.log[T] || 0, total = done + due.length, pct = total ? done / total : 0;
+  $("date").textContent = new Date(T * 864e5).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  var sk = streak(); $("streak").textContent = "🔥 " + sk + (sk === 1 ? " day streak" : " day streak");
+  $("hero").innerHTML = '<div><div class="big">' + due.length + '</div><div class="lbl">' + (due.length ? (due.length === 1 ? "topic to revise today" : "topics to revise today") : (waiting ? "Daily goal reached" : total ? "All caught up for today" : "Add your first topic to begin")) + (waiting ? "<br>" + waiting + " more waiting" : "") + '</div>' + (!due.length && waiting ? '<button class="go" data-act="more">Do 5 more</button>' : '<button class="go" data-act="quiz"' + (due.length ? "" : " disabled") + '>Start revision</button>') + '</div>' +
+    '<div class="ring"><svg viewBox="0 0 100 100"><circle class="rt" cx="50" cy="50" r="44"/><circle class="rf" cx="50" cy="50" r="44" stroke-dasharray="' + (pct * 276.46).toFixed(1) + ' 276.46" transform="rotate(-90 50 50)"/></svg><span>' + done + '/' + total + '</span></div>';
+  var learning = S.topics.filter(function (t) { return t.stage < 5; }).length;
+  var mastered = S.topics.length - learning;
+  var over = S.topics.filter(function (t) { return t.stage < 5 && t.due < T; }).length;
+  var lap = S.topics.reduce(function (a, t) { return a + (t.lapses || 0); }, 0);
+  $("stats").innerHTML = '<div class="stat bad"><b>' + over + '</b><small>Overdue</small></div><div class="stat"><b>' + learning + '</b><small>Learning</small></div><div class="stat ok"><b>' + mastered + '</b><small>Mastered</small></div><div class="stat"><b>' + lap + '</b><small>Forgotten</small></div>';
+  var cnt = [], mx = 1, i;
+  for (i = 0; i < 7; i++) { cnt[i] = S.topics.filter(function (t) { return t.stage < 5 && (i === 0 ? t.due <= T : t.due === T + i); }).length; mx = Math.max(mx, cnt[i]); }
+  $("week").innerHTML = cnt.map(function (c, k) { return '<div class="bc' + (k === 0 ? " t" : "") + '"><b>' + c + '</b><i style="height:' + Math.max(4, Math.round(c / mx * 46)) + 'px"></i><span>' + (k === 0 ? "Today" : dow(T + k)) + '</span></div>'; }).join("");
+  var upc = S.topics.filter(function (t) { return t.stage < 5 && t.due > T; }).length;
+  var tabs = [["due", "Due (" + due.length + ")"], ["chapters", "Chapters"], ["upcoming", "Upcoming (" + upc + ")"], ["mastered", "Mastered"]];
+  $("tabs").innerHTML = tabs.map(function (x) { return '<button class="' + (tab === x[0] ? "on" : "") + '" data-act="tab" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join("");
+  $("subjs").innerHTML = ["all"].concat(Object.keys(SUBJ)).map(function (s) { return '<button class="' + (subj === s ? "on" : "") + '" data-act="subj" data-v="' + esc(s) + '">' + (s === "all" ? "All subjects" : SUBJ[s] + " " + esc(s)) + '</button>'; }).join("") + '<button data-act="newsubj" style="color:var(--pri);border-style:dashed">+ New subject</button>';
+  var cn = chapNames(), chapInfo = "";
+  if (chap !== "all" && cn.indexOf(chap) < 0) chap = "all";
+  $("chaps").style.display = "none"; chap = "all";
+  $("chaps").innerHTML = ["all"].concat(cn).map(function (n) { var c = n === "all" ? S.topics.length : S.topics.filter(function (t) { return t.chapter === n; }).length; return '<button class="' + (chap === n ? "on" : "") + '" data-act="chap" data-v="' + esc(n) + '">' + (n === "all" ? "All chapters" : "📑 " + esc(n) + " (" + c + ")") + '</button>'; }).join("") + (chap !== "all" ? '<button data-act="addin" data-v="' + esc(chap) + '" style="color:var(--pri);border-color:var(--pri)">+ Add to ' + esc(chap) + '</button>' : "");
+  if (chap !== "all") { var ct = S.topics.filter(function (t) { return t.chapter === chap; }), cm = ct.filter(function (t) { return t.stage >= 5; }).length, cd = ct.filter(function (t) { return t.stage < 5 && t.due <= T; }).length; chapInfo = '<p class="msg"><em>' + esc(chap) + '</em> has ' + ct.length + (ct.length === 1 ? ' topic, ' : ' topics, ') + cm + ' mastered, ' + cd + ' due today.</p>'; }
+  var list = S.topics.filter(function (t) {
+    if (subj !== "all" && t.subject !== subj) return false;
+    if (chap !== "all" && t.chapter !== chap) return false;
+    if (sq) return hit(t);
+    if (tab === "due") return due.indexOf(t) >= 0;
+    if (tab === "upcoming") return t.stage < 5 && t.due > T;
+    if (tab === "mastered") return t.stage >= 5;
+    return true;
+  }).sort(function (a, b) { return a.due - b.due; });
+  if (list.length) $("list").innerHTML = chapInfo + (tab === "due" && waiting ? '<p class="msg">' + waiting + ' more due topics are waiting, oldest first. They appear as you finish.</p>' : "") + (tab === "chapters" ? grouped(list) : list.map(card).join(""));
+  else $("list").innerHTML = chapInfo + '<div class="empty">' + (!S.topics.length ? 'No topics yet. Tap “Add topic” after your next study session.<br><button data-act="sample">Try 3 sample topics</button>' : (tab === "due" ? "Nothing due here. Nice work." : "Nothing to show in this view.")) + '</div>';
+  $("tabs").style.display = sq ? "none" : ""; $("sqx").style.display = sq ? "" : "none"; if (sq) $("list").innerHTML = searchHtml(list);
+  $("qbtn").textContent = due.length ? "Revise (" + due.length + ")" : "Revise";
+  $("lim").innerHTML = '<span>Daily limit</span>' + [5, 10, 15, 25, 0].map(function (n) { return '<button class="' + ((S.cap || 0) === n ? "on" : "") + '" data-act="cap" data-v="' + n + '">' + (n || "None") + '</button>'; }).join("");
+  renderQuiz();
+}
+
+function renderQuiz() {
+  var q = $("quiz"); if (!Q.open) { q.classList.remove("on"); return; }
+  q.classList.add("on");
+  var list = queue(), head = '<div class="qh"><span>' + (Q.total - list.length) + ' of ' + Q.total + ' revised</span><button data-act="qclose">Close</button></div><div class="qp"><i style="width:' + (Q.total ? (Q.total - list.length) / Q.total * 100 : 100) + '%"></i></div>';
+  if (!list.length) { q.innerHTML = head + '<div class="qc"><h2>Session complete</h2><p class="msg">Every due topic is revised. Come back tomorrow.</p></div><div class="qb">' + (dueList().length ? '<button class="hd" data-act="more">Do 5 more (' + dueList().length + ' waiting)</button>' : "") + '<button class="pass" data-act="qclose">Back to dashboard</button></div>'; return; }
+  var t = list[0], ns = Math.max(0, t.stage - 1);
+  q.innerHTML = head + '<div class="qc"><span class="sb">' + (SUBJ[t.subject] || "") + " " + esc(t.subject) + '</span><h2>' + esc(t.title) + '</h2><p class="msg">Day ' + SCH[t.stage] + ' revision. Say it out loud first.</p>' +
+    (Q.rev ? '<div class="qn">' + (t.note ? esc(t.note) : "You did not save a note for this topic.") + '</div>' : "") + '</div>' +
+    '<div class="' + (Q.rev ? "qg" : "qb") + '">' + (Q.rev ? gb(t.id, "e", "ez", "Easy", t.stage + 1 < 5 ? "Next: Day " + SCH[t.stage + 1] : "Mastered", "qgrade") + gb(t.id, "o", "ok2", "Okay", t.stage + 1 < 5 ? "Next: Day " + SCH[t.stage + 1] : "Mastered", "qgrade") + gb(t.id, "h", "hd", "Hard", "Repeat in 2 days", "qgrade") + gb(t.id, "f", "fg", "Forgot", "Repeat Day " + SCH[ns] + " tomorrow", "qgrade") : '<button class="go" style="margin:0" data-act="qreveal">Check my recall</button>') + '</div>';
+}
+
+function sheetMode() {
+  $("f-mode").innerHTML = [["one", "Single topic"], ["chap", "Whole chapter"]].map(function (x) { return '<button class="' + (mode === x[0] ? "on" : "") + '" data-act="mode" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join("");
+  $("f-one").style.display = mode === "one" ? "" : "none"; $("f-chap").style.display = mode === "chap" ? "" : "none";
+  $("f-mode").style.display = editId ? "none" : ""; $("f-dt").style.display = editId ? "none" : "";
+}
+function chapNames() { var o = []; S.topics.forEach(function (t) { if (t.chapter && o.indexOf(t.chapter) < 0) o.push(t.chapter); }); return o; }
+function chapChips() { $("f-chs").innerHTML = chapNames().map(function (n) { return '<button data-act="pickchap" data-v="' + esc(n) + '">📑 ' + esc(n) + '</button>'; }).join(""); }
+function editTopic(id) {
+  var t = S.topics.filter(function (x) { return x.id === id; })[0]; if (!t) return;
+  pick = t.subject; openSheet(); editId = id;
+  $("f-title").value = t.title; $("f-note").value = t.note || ""; $("f-chname").value = t.chapter || "";
+  $("f-h").textContent = "Edit topic"; $("f-save").textContent = "Save changes"; sheetMode(); parentOpts(t.parent || "");
+}
+function openSheet(pc, par, sj) {
+  var d = new Date(), v = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  $("f-date").value = v; $("f-date").max = v; $("f-title").value = ""; $("f-note").value = ""; $("f-chname").value = pc || ""; $("f-lines").value = ""; mode = "one"; editId = null; $("f-h").textContent = "What did you learn?"; $("f-save").textContent = "Save topic";
+  if (pc) { var cs = S.topics.filter(function (t) { return t.chapter === pc; })[0]; if (cs) pick = cs.subject; } if (sj) pick = sj;
+  sheetMode(); chapChips(); parentOpts(par || "");
+  subjChips();
+  $("sheet").classList.add("on");
+}
+function saveTopic() {
+  var title = $("f-title").value.trim(); if (mode === "one" && !title) { toast("Type the topic name first."); return; }
+  var lines = ($("f-lines").value || "").split("\n").map(function (s) { return s.trim().replace(/^(\d+[.)]|[-•*])\s+/, ""); }).filter(Boolean);
+  if (mode === "chap" && !lines.length) { toast("Add at least one line, one topic per line."); return; }
+  var r = document.querySelector('input[name="sj"]:checked'); pick = r ? r.value : "Pathology";
+  if (editId) { var et = S.topics.filter(function (x) { return x.id === editId; })[0]; if (et) { et.title = title; et.note = $("f-note").value.trim(); et.subject = pick; var ec = $("f-chname").value.trim(); if (ec) et.chapter = ec; else delete et.chapter; var ep = $("f-par").value; if (ep && ec) et.parent = Number(ep); else delete et.parent; } editId = null; $("sheet").classList.remove("on"); save(); render(); toast("Changes saved."); backFlow(); return; }
+  var p = ($("f-date").value || "").split("-"), learned = p.length === 3 ? Math.floor(Date.UTC(+p[0], +p[1] - 1, +p[2]) / 864e5) : today();
+  var L = Math.min(learned, today());
+  if (mode === "chap") {
+    var ch = $("f-chname").value.trim(), st = [], par0 = $("f-par").value ? Number($("f-par").value) : 0;
+    ($("f-lines").value || "").split("\n").forEach(function (raw) {
+      var ind = raw.match(/^[ \t]*/)[0].replace(/\t/g, "  ").length, ln = raw.trim(), dm = ln.match(/^(-+)\s+/);
+      if (dm) { ind += dm[1].length * 2; ln = ln.slice(dm[0].length); } else ln = ln.replace(/^(\d+[.)]|[•*])\s+/, "");
+      if (!ln || /^-+$/.test(ln)) return;
+      while (st.length && st[st.length - 1].i >= ind) st.pop();
+      var pr = ln.split("|"); addTopic(pr[0].trim(), pick, (pr[1] || "").trim(), L, 0);
+      var nt = S.topics[S.topics.length - 1]; if (ch) nt.chapter = ch;
+      var pp = st.length ? st[st.length - 1].id : (ch ? par0 : 0); if (pp) nt.parent = pp;
+      st.push({ i: ind, id: nt.id });
+    });
+  }
+  else { addTopic(title, pick, $("f-note").value.trim(), L, 0); var c1 = $("f-chname").value.trim(); if (c1) S.topics[S.topics.length - 1].chapter = c1; var pv = $("f-par").value; if (pv && c1) S.topics[S.topics.length - 1].parent = Number(pv); }
+  $("sheet").classList.remove("on"); tab = "chapters"; subj = "all"; save(); render(); toast("Saved " + (mode === "chap" ? lines.length + " topics" : "1 topic") + ". Day 1 revision is on " + fmt(L + 1) + "."); backFlow();
+}
+
+var TOUR = [
+  { e: "🧠", t: "Welcome", p: "Memory fades fastest right after you learn something. Each revision slows the fading. This app tells you when to revise so nothing slips away.", l: ["Revise on Day 1, 3, 5, 7 and 14 after learning", "These days are a proven rule of thumb, not exact for every person, so rate your recall honestly"] },
+  { e: "➕", t: "Add what you studied", p: "Tap + Add topic after each study session.", l: ["Subjects: Pathology, FMT (Forensic Medicine and Toxicology), HMM (Homeopathic Materia Medica) and Organon. Add your own with + New subject", "Single topic is for one thing. Whole chapter lets you paste many lines at once", "Start a line with “- ” to make it a sub-topic of the line above"] },
+  { e: "✅", t: "Revise every day", p: "The Due tab and the Revise button show what is ready today.", l: ["Easy or Okay: moves to the next day in the plan", "Hard: you remembered it, but it comes back in 2 days", "Forgot: goes back one step and returns tomorrow", "The daily limit keeps the list small. Oldest topics come first"] },
+  { e: "🗺", t: "See the big picture", p: "Open the Chapters tab, then a chapter's flowchart.", l: ["Branches show topics under topics", "Brackets show how many of the 5 revisions are done", "+ Sub-topic grows a branch whenever you learn more"] },
+  { e: "📱", t: "Keep it safe", p: "Your topics live inside this app, on this phone only.", l: ["Open Backup and restore, tap Copy backup and save the text somewhere safe", "Updating the app keeps your topics, but uninstalling it or clearing its storage erases them", "Back up now and then"] }
+];
+function showTour(i) { tourI = i; renderTour(); }
+function renderTour() {
+  var q = $("tour"); if (tourI < 0) { q.classList.remove("on"); return; }
+  var d = TOUR[tourI], last = tourI === TOUR.length - 1;
+  q.innerHTML = '<div class="qh"><span>' + (tourI + 1) + ' of ' + TOUR.length + '</span><button data-act="tourend">Skip</button></div><div class="qp"><i style="width:' + ((tourI + 1) / TOUR.length * 100) + '%"></i></div>' +
+    '<div class="qc" style="text-align:left;justify-content:flex-start;padding-top:8px;overflow:auto"><div style="font-size:44px">' + d.e + '</div><h2>' + d.t + '</h2><p class="msg" style="font-size:15.5px">' + d.p + '</p><ul class="tl">' + d.l.map(function (x) { return "<li>" + x + "</li>"; }).join("") + '</ul></div>' +
+    '<div class="qb">' + (last && !S.topics.length ? '<button class="ok2" data-act="tourdemo">Try 3 sample topics</button>' : "") + '<button class="go" style="margin:0" data-act="' + (last ? "tourend" : "tournext") + '">' + (last ? "Get started" : "Next") + '</button>' + (tourI ? '<button class="ok2" data-act="tourback">Back</button>' : "") + '</div>';
+  q.classList.add("on");
+}
+var EMOS = ["📚", "🩺", "🧪", "💊", "🦴", "🧠", "🫀", "🔬", "🌿", "🧬", "🩸", "⚕️"], nsEmo = "📚";
+function subjChips() {
+  $("f-subj").innerHTML = Object.keys(SUBJ).map(function (s) { return '<label><input type="radio" name="sj" value="' + esc(s) + '" hidden' + (s === pick ? " checked" : "") + '><span style="display:block">' + SUBJ[s] + " " + esc(s) + '</span></label>'; }).join("") + '<button data-act="newsubj" style="color:var(--pri);border-style:dashed">+ New</button>';
+}
+function subjDialog() {
+  $("ns-emo").innerHTML = EMOS.map(function (e) { return '<button data-act="nsemo" data-v="' + e + '" class="' + (e === nsEmo ? "on" : "") + '" style="font-size:18px">' + e + "</button>"; }).join("");
+  var c = S.custom || {}, ks = Object.keys(c);
+  $("ns-list").innerHTML = ks.length ? '<p class="msg" style="margin-top:12px">Subjects you added. Tap one to remove it, only if it has no topics.</p><div class="chips" style="flex-wrap:wrap;overflow:visible">' + ks.map(function (k) { return '<button data-act="nsdel" data-v="' + esc(k) + '">' + c[k] + " " + esc(k) + " ✕</button>"; }).join("") + "</div>" : "";
+}
+function addSamples() {
+  var T = today();
+  addTopic("Acute inflammation, vascular events", "Pathology", "Vasodilation and raised permeability first, then neutrophils emigrate into the tissue.", T - 1, 0);
+  addTopic("Aphorism 1 of the Organon", "Organon", "The physician’s only mission is to restore the sick to health.", T - 3, 1);
+  addTopic("Aconite, key picture", "HMM", "Sudden violent onset, fear and restlessness, often after cold dry wind.", T - 7, 3);
+  save(); render();
+}
+document.addEventListener("toggle", function (e) { var g = e.target && e.target.getAttribute && e.target.getAttribute("data-g"); if (g) openG[g] = e.target.open; }, true);
+document.addEventListener("click", function (e) {
+  var b = e.target.closest("[data-act]"); if (!b) return;
+  var a = b.getAttribute("data-act"), id = Number(b.getAttribute("data-id")), v = b.getAttribute("data-v");
+  if (a === "closeSheet") { if (e.target === b) { $("sheet").classList.remove("on"); backFlow(); } return; }
+  if (a === "closeSubj") { if (e.target === b) $("subjd").classList.remove("on"); return; }
+  if (a === "closeGr") { if (e.target === b) { G = null; $("gr").classList.remove("on"); } return; }
+  if (a === "tab") { tab = v; render(); }
+  else if (a === "subj") { subj = v; render(); }
+  else if (a === "newsubj") { nsEmo = "📚"; $("ns-name").value = ""; subjDialog(); $("subjd").classList.add("on"); }
+  else if (a === "nsemo") { nsEmo = v; subjDialog(); }
+  else if (a === "closeSubjBtn") $("subjd").classList.remove("on");
+  else if (a === "subjsave") {
+    var nm = ($("ns-name").value || "").trim().replace(/\s+/g, " ");
+    if (!nm) { toast("Type a subject name first."); return; }
+    if (/["'\\<>&|]/.test(nm)) { toast("Please avoid quotes and symbols in the name."); return; }
+    if (Object.keys(SUBJ).some(function (k) { return k.toLowerCase() === nm.toLowerCase(); })) { toast("That subject already exists."); return; }
+    S.custom = S.custom || {}; S.custom[nm] = nsEmo; SUBJ[nm] = nsEmo; SUBJF[nm] = nm;
+    var inSheet = $("sheet").classList.contains("on");
+    if (inSheet) pick = nm; else subj = nm;
+    save(); $("subjd").classList.remove("on"); render();
+    if (inSheet) { subjChips(); if (typeof parentOpts === "function") parentOpts(""); }
+    toast("Added " + nm + ".");
+  }
+  else if (a === "nsdel") {
+    if (S.topics.some(function (t) { return t.subject === v; })) { toast("Move or delete its topics first."); return; }
+    delete S.custom[v]; delete SUBJ[v]; if (subj === v) subj = "all"; if (pick === v) pick = "Pathology";
+    save(); subjDialog(); render(); if ($("sheet").classList.contains("on")) subjChips();
+  }
+  else if (a === "grade") grade(id, v);
+  else if (a === "cap") { S.cap = Number(v); save(); render(); }
+  else if (a === "mode") { mode = v; sheetMode(); }
+  else if (a === "more") { var T2 = today(), q0 = queue().length; S.bonus = { day: T2, n: (S.bonus && S.bonus.day === T2 ? S.bonus.n : 0) + 5 }; save(); var q1 = queue().length; if (Q.open) Q.total += q1 - q0; else Q = { open: true, rev: false, total: q1 }; render(); }
+  else if (a === "del") { if (armed === id) { S.topics = S.topics.filter(function (t) { return t.id !== id; }); armed = null; save(); } else { armed = id; setTimeout(function () { armed = null; render(); }, 3000); } render(); }
+  else if (a === "add") openSheet();
+  else if (a === "edit") editTopic(id);
+  else if (a === "chap") { chap = v; if (v !== "all") tab = "all"; render(); }
+  else if (a === "addin") openSheet(v);
+  else if (a === "gch") { G = { kind: "c", s: b.getAttribute("data-s"), ch: v }; renderFlow(); }
+  else if (a === "addsub") { var tp = S.topics.filter(function (x) { return x.id === id; })[0]; if (tp) { FB = { s: tp.subject, ch: tp.chapter || "" }; G = null; renderFlow(); openSheet(tp.chapter, tp.id, tp.subject); } }
+  else if (a === "sugg") suggest();
+  else if (a === "flowsug") { var fs2 = G.s, fc2 = G.ch; FB = { s: fs2, ch: fc2 }; G = null; renderFlow(); openSheet(fc2, 0, fs2); mode = "chap"; sheetMode(); suggest(); }
+  else if (a === "addtop") { var fs = G.s, fc = G.ch; FB = { s: fs, ch: fc }; G = null; renderFlow(); openSheet(fc, 0, fs); }
+  else if (a === "flowedit") { var te = S.topics.filter(function (x) { return x.id === id; })[0]; if (te) { FB = { s: te.subject, ch: te.chapter || "" }; G = null; renderFlow(); editTopic(id); } }
+  else if (a === "grclose") { G = null; renderFlow(); }
+  else if (a === "ren") { var rs = b.getAttribute("data-s"); ren = { s: rs, ch: v }; openG[rs + " / " + v] = true; render(); var ri = $("ren-in"); if (ri) { ri.focus(); ri.select(); } }
+  else if (a === "rencancel") { ren = null; render(); }
+  else if (a === "rensave") { var nn = ($("ren-in").value || "").trim(); if (!nn) { toast("Type a chapter name first."); return; } var cnt = 0; S.topics.forEach(function (t) { if (t.subject === ren.s && t.chapter === ren.ch) { t.chapter = nn; cnt++; } }); openG[ren.s + " / " + nn] = true; ren = null; save(); render(); toast("Renamed " + cnt + (cnt === 1 ? " topic" : " topics") + " to " + nn + "."); }
+  else if (a === "pickchap") { $("f-chname").value = v; var ft = S.topics.filter(function (x) { return x.chapter === v; })[0]; if (ft) { var rr = document.querySelector('input[name="sj"][value="' + ft.subject + '"]'); if (rr) rr.checked = true; } parentOpts(""); }
+  else if (a === "save") saveTopic();
+  else if (a === "theme") { S.theme = S.theme === "dark" ? "light" : "dark"; save(); render(); }
+  else if (a === "quiz") { var n = dueList().length; if (!n) { toast("Nothing is due right now."); return; } Q = { open: true, rev: false, total: n }; renderQuiz(); }
+  else if (a === "qreveal") { Q.rev = true; renderQuiz(); }
+  else if (a === "qgrade") { Q.rev = false; grade(id, v); }
+  else if (a === "qclose") { Q.open = false; renderQuiz(); }
+  else if (a === "sample") addSamples();
+  else if (a === "tourdemo") { addSamples(); tourI = -1; S.tour = 1; save(); renderTour(); }
+  else if (a === "tour") showTour(0);
+  else if (a === "sqclear") { sq = ""; $("sq").value = ""; render(); $("sq").focus(); }
+  else if (a === "tournext") { tourI++; renderTour(); }
+  else if (a === "tourback") { tourI = Math.max(0, tourI - 1); renderTour(); }
+  else if (a === "tourend") { tourI = -1; S.tour = 1; save(); renderTour(); }
+  else if (a === "reset") {
+    if (!resetArm) { resetArm = true; b.textContent = "Tap again to erase everything"; setTimeout(function () { resetArm = false; var rb = $("rst"); if (rb) rb.textContent = "Reset app to default"; }, 4000); return; }
+    resetArm = false; S = { topics: [], log: {}, theme: S.theme, cap: 15, bonus: { day: -1, n: 0 }, tour: 0 };
+    Object.keys(SUBJ).forEach(function (k) { if (DEFSUBJ.indexOf(k) < 0) delete SUBJ[k]; });
+    tab = "due"; subj = "all"; pick = "Pathology"; sq = ""; $("sq").value = ""; save(); $("bk").value = ""; render(); toast("App reset. Everything is back to default."); showTour(0);
+  }
+  else if (a === "copy") { var j = JSON.stringify(S); $("bk").value = j; try { navigator.clipboard.writeText(j).then(function () { toast("Backup copied."); }, function () { toast("Copy it from the box."); }); } catch (x) { toast("Copy it from the box."); } }
+  else if (a === "restore") { try { var p = JSON.parse($("bk").value); if (!Array.isArray(p.topics)) throw 0; S = { topics: p.topics, log: p.log || {}, theme: p.theme || "dark", cap: p.cap == null ? 15 : p.cap, bonus: p.bonus || { day: -1, n: 0 }, tour: p.tour || 0, custom: p.custom || {} }; save(); render(); toast("Restored " + S.topics.length + " topics."); } catch (x) { toast("That backup text is not valid."); } }
+});
+
+$("f-chname").addEventListener("input", function () { parentOpts(); });
+$("f-subj").addEventListener("change", function () { parentOpts(); });
+$("sq").addEventListener("input", function () { sq = this.value.trim().toLowerCase(); render(); });
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+load(); render(); if (!S.tour) showTour(0);
+</script>
+</body>
+</html>
